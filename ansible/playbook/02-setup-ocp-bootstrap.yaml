@@ -1,0 +1,52 @@
+## ----------------------------------------------------------------------------
+## ..:: ocp-bootstrap setup ::..
+## ----------------------------------------------------------------------------
+
+- hosts: ocp_bootstrap
+  remote_user: root
+  tasks:
+    - name: Set Timezone
+      timezone:
+        name: '{{ timezone }}'
+
+    - name: Download RHCOS Kernel
+      get_url:
+        url: http://10.1.1.8:8080/installations/rhcos-{{ rhcos_release }}-x86_64-live-kernel-x86_64
+        dest: /boot/vmlinuz-rhcos
+
+    - name: Download RHCOS Kernel
+      get_url:
+        url: http://10.1.1.8:8080/installations/rhcos-{{ rhcos_release }}-x86_64-live-initramfs.x86_64.img
+        dest: /boot/initramfs-rhcos.img
+
+    - name: Modify GRUB
+      shell: grubby --add-kernel=/boot/vmlinuz-rhcos --args="ip=10.1.1.9::10.1.1.1:255.255.255.0:ocp-bootstrap.ocp.f5-udf.com:{{ iface }}:none nameserver=10.1.1.4 rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda coreos.live.rootfs_url=http://10.1.1.8:8080/installations/rhcos-{{ rhcos_release }}-x86_64-live-rootfs.x86_64.img coreos.inst.ignition_url=http://10.1.1.8:8080/installations/bootstrap.ign" --initrd=/boot/initramfs-rhcos.img --make-default --title=rhcos
+
+    - name: Reboot the server
+      shell: 'sleep 5 && reboot'
+      async: 1
+      poll: 0
+
+    - name: Wait for reboot...
+      pause:
+        seconds: 15
+
+- hosts: ocp_bootstrap
+  remote_user: core
+  gather_facts: False
+  tasks:
+    - name: Wait for host returns up
+      wait_for:
+        host: '{{ inventory_hostname }}'
+        port: 22
+        sleep: 5
+        timeout: 900
+      delegate_to: localhost
+
+    - name: Check if bootstrap is correctly configured
+      register: bootstrap_journal
+      raw: journalctl -b -u release-image.service -u bootkube.service | grep Created | grep 99_openshift | wc -l
+      ignore_errors: true
+      retries: 300
+      delay: 5
+      until: bootstrap_journal.rc == 0 and bootstrap_journal.stdout_lines[0] == '4'

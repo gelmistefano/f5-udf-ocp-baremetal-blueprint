@@ -1,0 +1,12 @@
+- hosts: ocp_centos
+  remote_user: core
+  gather_facts: False
+  vars:
+    ## Get UDF SSH Key
+    udf_access_public_key: "{{ lookup('file', '/home/ubuntu/.ssh/authorized_keys').split('\n')[0] }}"
+  tasks:
+    # - name: Debug
+    #   debug:
+    #     var: udf_access_public_key
+    - name: Restore SSH key on Bootstrap Host
+      raw: echo -e "{{ udf_access_public_key }}" | tee -a /home/core/.ssh/authorized_keys

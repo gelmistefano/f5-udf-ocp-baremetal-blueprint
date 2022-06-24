@@ -1,0 +1,44 @@
+[infra_server]
+infra-server ansible_host=10.1.1.4 hostname=infra-server
+
+[ocp_bootstrap]
+ocp-bootstrap ansible_host=10.1.1.9 hostname=ocp-bootstrap
+
+[ocp_web]
+ocp-web ansible_host=10.1.1.8 hostname=ocp-web
+
+[ocp_master]
+ocp-master1 ansible_host=10.1.1.10 hostname=ocp-master1
+ocp-master2 ansible_host=10.1.1.11 hostname=ocp-master2
+ocp-master3 ansible_host=10.1.1.12 hostname=ocp-master3
+
+[ocp_worker]
+ocp-worker1 ansible_host=10.1.1.13 hostname=ocp-worker1
+ocp-worker2 ansible_host=10.1.1.14 hostname=ocp-worker2
+ocp-worker3 ansible_host=10.1.1.15 hostname=ocp-worker3
+
+[linux_jumphost]
+linux-jumphost ansible_host=10.1.1.7 hostname=linux-jumphost
+
+[ocp_nodes:children]
+ocp_master
+ocp_worker
+ocp_bootstrap
+ocp_web
+infra_server
+linux_jumphost
+
+[ocp_centos:children]
+ocp_bootstrap
+ocp_master
+ocp_worker
+
+[ocp_nodes:vars]
+ansible_python_interpreter=/usr/bin/python3
+iface=ens5
+# Paste below your data
+timezone=Europe/Rome
+ocp_release=4.9.0
+rhcos_branch=4.9
+rhcos_release=4.9.0
+redhat_pull_secret='Enter the text from your Pull Secrets'

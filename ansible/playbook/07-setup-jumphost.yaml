@@ -1,0 +1,19 @@
+- hosts: linux_jumphost
+  remote_user: root
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: '{{ timezone }}'
+
+    - name: Remove resolv.conf link
+      file:
+        path: /etc/resolv.conf
+        state: absent
+
+    - name: change resolv.conf
+      template:
+        src: resolv-web.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'

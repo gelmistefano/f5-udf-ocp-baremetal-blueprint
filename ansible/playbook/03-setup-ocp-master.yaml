@@ -1,0 +1,60 @@
+## ----------------------------------------------------------------------------
+## ..:: ocp-master setup ::..
+## ----------------------------------------------------------------------------
+
+# Change nginx conf
+- hosts: ocp_web
+  remote_user: root
+  tasks:
+    - name: delete default nginx conf
+      file:
+        path: /etc/nginx/nginx.conf
+        state: absent
+
+    - name: copy nginx site.conf
+      template:
+        src: nginx.conf-master.j2
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+- hosts: ocp_master
+  remote_user: root
+  tasks:
+    - name: Set Timezone
+      timezone:
+        name: '{{ timezone }}'
+
+    - name: Download RHCOS Kernel
+      get_url:
+        url: http://10.1.1.8:8080/installations/rhcos-{{ rhcos_release }}-x86_64-live-kernel-x86_64
+        dest: /boot/vmlinuz-rhcos
+
+    - name: Download RHCOS Kernel
+      get_url:
+        url: http://10.1.1.8:8080/installations/rhcos-{{ rhcos_release }}-x86_64-live-initramfs.x86_64.img
+        dest: /boot/initramfs-rhcos.img
+
+    - name: Modify GRUB
+      shell: grubby --add-kernel=/boot/vmlinuz-rhcos --args="ip={{ ansible_ssh_host }}::10.1.1.1:255.255.255.0:{{ ansible_hostname }}.ocp.f5-udf.com:{{ iface }}:none nameserver=10.1.1.4 rd.neednet=1 coreos.inst=yes coreos.inst.install_dev=vda coreos.live.rootfs_url=http://10.1.1.8:8080/installations/rhcos-{{ rhcos_release }}-x86_64-live-rootfs.x86_64.img coreos.inst.ignition_url=http://10.1.1.8:8080/installations/master.ign" --initrd=/boot/initramfs-rhcos.img --make-default --title=rhcos
+
+    - name: Reboot the server
+      shell: 'sleep 5 && reboot'
+      async: 1
+      poll: 0
+
+- hosts: ocp_web
+  tasks:
+    - name: Check if masters are correctly configured
+      register: oc_master
+      raw: oc get nodes -A | grep " Ready " | wc -l
+      ignore_errors: true
+      retries: 600
+      delay: 5
+      until: oc_master.rc == 0 and oc_master.stdout_lines[0] == '3'

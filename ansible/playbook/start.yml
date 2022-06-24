@@ -1,0 +1,23 @@
+- name: Setup Infra Server
+  import_playbook: 00-setup-infra-server.yaml
+
+- name: Setup OCP Web
+  import_playbook: 01-setup-ocp-web.yaml
+
+- name: Setup OCP Bootstrap
+  import_playbook: 02-setup-ocp-bootstrap.yaml
+
+- name: Setup OCP Master Nodes
+  import_playbook: 03-setup-ocp-master.yaml
+
+- name: Setup OCP Worker Nodes
+  import_playbook: 04-setup-ocp-worker.yaml
+
+- name: Configure OCP Load Balancer and Final Checks
+  import_playbook: 05-setup-ocp-load-balancer.yaml
+
+- name: Restore UDF SSH Key
+  import_playbook: 06-restore-ssh-keys.yaml
+
+- name: Setup Linux Jumphost
+  import_playbook: 07-setup-jumphost.yaml

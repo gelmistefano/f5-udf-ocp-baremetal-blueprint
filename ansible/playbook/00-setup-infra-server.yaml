@@ -1,0 +1,48 @@
+- hosts: infra_server
+  remote_user: root
+  tasks:
+    - name: Set timezone
+      timezone:
+        name: '{{ timezone }}'
+
+    - name: Stop Systemd-resolved
+      systemd:
+        name: systemd-resolved # not required. Name of the service. This parameter takes the name of exactly one service to work with. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+        state: stopped # not required. choices: reloaded;restarted;started;stopped. C(started)/C(stopped) are idempotent actions that will not run commands unless necessary. C(restarted) will always bounce the service. C(reloaded) will always reload.
+        enabled: no # not required. Whether the service should start on boot. B(At least one of state and enabled are required.)
+
+    - name: Remove symlink
+      file:
+        path: '/etc/resolv.conf'
+        state: absent
+
+    - name: copy resolv.conf
+      template:
+        src: infra-server_resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: copy /etc/hosts
+      template:
+        src: infra-server-hosts.j2
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Upgrading all packages to the latest version
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: 'install dnsmasq'
+      apt:
+        name: ['dnsmasq']
+        state: latest
+
+    - name: restart dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted

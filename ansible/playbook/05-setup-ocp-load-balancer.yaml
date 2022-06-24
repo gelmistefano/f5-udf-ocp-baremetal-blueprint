@@ -1,0 +1,30 @@
+- hosts: ocp_web
+  remote_user: root
+  tasks:
+    - name: delete default nginx conf
+      file:
+        path: /etc/nginx/nginx.conf
+        state: absent
+
+    - name: copy nginx site.conf
+      template:
+        src: nginx.conf-final.j2
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+- hosts: ocp_web
+  tasks:
+    - name: Check if all pods are up and running
+      shell: oc get pods -A | grep -vi running | grep -vi completed | grep -v NAMESPACE | wc -l
+      register: oc_pods
+      ignore_errors: true
+      retries: 1000
+      delay: 5
+      until: oc_pods.rc == 0 and oc_pods.stdout_lines[0] == '0'
