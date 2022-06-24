@@ -155,6 +155,11 @@
     - name: Adding Influx apt reporisotries
       shell: echo "deb https://repos.influxdata.com/ubuntu `lsb_release -cs` stable\n" > /etc/apt/sources.list.d/influxdb.list
 
+    - name: Upgrading all packages to the latest version
+      apt:
+        update_cache: yes
+        upgrade: dist
+
     - name: Installing Telegraf
       apt:
         pkg:
