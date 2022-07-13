@@ -48,6 +48,7 @@ Install Ansible and dependencies
 
 ```bash
 sudo apt update && sudo apt install -y python3 python-is-python3 python3-pip
+
 pip install ansible
 ```
 
@@ -61,7 +62,7 @@ cd /etc/yum.repos.d/
 sudo sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
 sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 
-sudo yum update
+sudo yum update -y
 
 cd /etc/yum.repos.d/
 sudo sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
