@@ -42,6 +42,13 @@
         name: ['dnsmasq']
         state: latest
 
+    - name: Add wildcard domain
+      lineinfile:
+        path: /etc/dnsmasq.conf
+        line: 'address=/.apps.ocp.f5-udf.com/10.1.1.8'
+        insertafter: EOF
+        state: present
+
     - name: restart dnsmasq
       service:
         name: dnsmasq
