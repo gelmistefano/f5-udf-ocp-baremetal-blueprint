@@ -21,3 +21,21 @@
 
 - name: Setup Linux Jumphost
   import_playbook: 07-setup-jumphost.yaml
+
+- name: Debug messages
+  hosts: ocp_web
+  remote_user: root
+  vars:
+    remotefile: '/usr/share/nginx/html/installations/auth/kubeadmin-password'
+  tasks:
+    - name: Read password
+      ansible.builtin.slurp:
+        src: '{{ remotefile }}'
+      register: slurpfile
+    - name: Print OCP Console credentials
+      debug:
+        msg:
+          - 'You can access to OCP Console throught Jumphost (Credentials: user/user)'
+          - 'URL: https://console-openshift-console.apps.ocp.f5-udf.com/'
+          - 'Username: kubeadmin'
+          - "Password: {{ slurpfile['content'] | b64decode }}"
